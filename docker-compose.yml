@@ -1,0 +1,127 @@
+version: "3.8"
+services:
+  spann_service_app:
+    build:
+      args:
+        user: sapar
+        uid: 1000
+      context: ./
+      dockerfile: spann_service/Dockerfile
+    image: spann_service
+    container_name: spann-service-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./spann_service:/var/www
+    networks:
+      - multimicro5
+  rabbit_one_service_app:
+    build:
+      args:
+        user: sapar
+        uid: 1000
+      context: ./
+      dockerfile: rabbit_one_service/Dockerfile
+    image: rabbit_one_service
+    container_name: rabbit-one-service-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./rabbit_one_service:/var/www
+    networks:
+      - multimicro5
+
+  spann_service_db:
+    image: postgres:latest
+    container_name: spann-service-db-postgres
+    restart: unless-stopped
+    volumes:
+      - ./spann_service/docker-compose/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: sopa0304
+      POSTGRES_USER: sopa
+      POSTGRES_DB: spann
+      # PGDATA: /var/lib/postgresql/data
+    networks:
+      - multimicro5
+  rabbit_one_service_db:
+    image: postgres:latest
+    container_name: rabbit-one-service-db-postgres
+    restart: unless-stopped
+    volumes:
+      - ./rabbit_one_service/docker-compose/postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: sopa0304
+      POSTGRES_USER: sopa
+      POSTGRES_DB: rabbitone
+      # PGDATA: /var/lib/postgresql/data
+    networks:
+      - multimicro5
+
+  adminer:
+    image: adminer
+    container_name: multimicro5-adminer
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    networks:
+      - multimicro5
+
+  spann_service_nginx:
+    image: nginx:1.17-alpine
+    container_name: spann-service-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./spann_service:/var/www
+      - ./spann_service/docker-compose/nginx:/etc/nginx/conf.d
+    networks:
+      - multimicro5
+  rabbit_one_service_nginx:
+    image: nginx:1.17-alpine
+    container_name: rabbit-one-service-nginx
+    restart: unless-stopped
+    ports:
+      - 8001:80
+    volumes:
+      - ./rabbit_one_service:/var/www
+      - ./rabbit_one_service/docker-compose/nginx:/etc/nginx/conf.d
+    networks:
+      - multimicro5
+
+  redis:
+    image: redis:latest
+    container_name: multimicro5-redis
+    # command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD}"
+    volumes:
+      - ./docker-compose/redis:/data #maybe for cache driver in .env
+    ports:
+      - "6379:6379"
+    networks:
+      - multimicro5
+
+  rabbitmq:
+    image: rabbitmq:3.8-management-alpine
+    container_name: multimicro5-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=myuser
+      - RABBITMQ_DEFAULT_PASS=mypassword
+    ports:
+      # AMQP protocol port
+      - '5672:5672'
+      # HTTP management UI
+      - '15672:15672'
+    volumes:
+      - ./docker-compose/rabbitmq/data/:/var/lib/rabbitmq/
+      - ./docker-compose/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - multimicro5
+
+networks:
+  multimicro5:
+    driver: bridge
