@@ -23,7 +23,7 @@ RUN git clone https://github.com/phpredis/phpredis.git /usr/src/php/ext/redis
 
 # Install PHP extensions
 RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd redis
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd redis sockets
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
